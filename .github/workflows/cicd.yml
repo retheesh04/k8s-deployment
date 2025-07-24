@@ -97,7 +97,7 @@ jobs:
       run: echo "The Quality Gate status is ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-status }}"
 
   build-docker-image-push:
-    runs-on: self-managed
+    runs-on: self-hosted
     needs: sonar-scan
     steps:
     - uses: actions/checkout@v4
