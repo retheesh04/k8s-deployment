@@ -3,14 +3,10 @@ name: Java CI with Maven
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
+  compile:
+    runs-on: self-hosted
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 17
@@ -19,5 +15,25 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
+    - name: install maven
+      run: sudo apt install maven -y
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: mvn compile
+  security-checks:
+    runs-on: self-hosted
+    needs: compile
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Trivy
+      run: |
+        sudo apt-get install wget apt-transport-https gnupg lsb-release -y
+        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+        echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+        sudo apt-get update -y
+        sudo apt-get install trivy -y
+    - name: Trivy fs scanning
+      run: trivy fs --format table -o fs-report.json .
+    - name: gitleaks installation
+      run: sudo apt install gitleaks -y
+    - name: gitleaks code scan
+      run: gitleaks detect source . -r report.json -f json
