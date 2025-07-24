@@ -101,6 +101,8 @@ jobs:
     needs: sonar-scan
     steps:
     - uses: actions/checkout@v4
+    - name: Create a new directory
+      run: sudo mkdir -p app 
     - name: Download artifact
       uses: actions/download-artifact@v4
       with:
